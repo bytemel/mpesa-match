@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M-Pesa Match: who paid, who didn't, in one minute</title>
+  <meta name="description" content="Paste an M-Pesa statement and a list of who should pay. See who paid in full, who paid part and who has not paid yet. Runs in your browser.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="canonical" href="https://mpesa-match.vercel.app/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a4fa8'/%3E%3Cpath d='M8 11h16M8 16h10M8 21h6' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M19 20l2.5 2.5L26 18' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="app/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="M-Pesa Match: who paid, who didn't, in one minute">
+  <meta property="og:description" content="Paste an M-Pesa statement and a list of who should pay. Runs in your browser: the statement never leaves your device.">
+  <meta property="og:url" content="https://mpesa-match.vercel.app/">
+  <meta property="og:image" content="https://mpesa-match.vercel.app/app/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://mpesa-match.vercel.app/app/og.png">
+  <link rel="stylesheet" href="app/style.css">
+  <link rel="stylesheet" href="app/app.css">
+  <script type="module" src="app/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <div class="wrap">
+      <p class="crumb"><a href="https://github.com/bytemel/mpesa-match">mpesa-match</a></p>
+      <h1>Who paid, who didn't, in one minute</h1>
+      <p class="lead">For chama treasurers, programme teams collecting fees and anyone selling tickets on a paybill. Paste the M-Pesa statement and the list of who should pay. It matches every payment by account number, phone or name, adds up part payments and shows who still owes.</p>
+      <p class="privacy">Your statement stays on this device. Everything runs in your browser. Nothing is uploaded.</p>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <div class="toolbar"><button class="btn btn-primary" type="button" id="sample">Load the sample chama</button><span class="hint">8 members, 11 statement rows, one repeated, one failed, one stranger.</span></div>
+    <div class="pair">
+      <section class="card field" aria-labelledby="st-h">
+        <h2 id="st-h">1. M-Pesa statement</h2>
+        <p class="hint" id="st-hint">Paste a CSV export or rows copied from a spreadsheet, with the header row. A business portal export works as is.</p>
+        <textarea id="statement" rows="8" wrap="off" spellcheck="false" aria-describedby="st-hint"></textarea>
+        <input id="statement-file" type="file" accept=".csv,text/csv,.txt" class="visually-hidden">
+        <label class="btn btn-link file-btn" for="statement-file">Upload a CSV</label>
+        <details id="mapping" hidden><summary>Columns used</summary><div class="map-grid" id="map-grid"></div></details>
+      </section>
+      <section class="card field" aria-labelledby="ex-h">
+        <h2 id="ex-h">2. Who should pay</h2>
+        <p class="hint" id="ex-hint">Columns: <code>name</code> and <code>amount</code>, plus <code>phone</code> and an account or member number if you have them.</p>
+        <textarea id="expected" rows="8" wrap="off" spellcheck="false" aria-describedby="ex-hint"></textarea>
+        <input id="expected-file" type="file" accept=".csv,text/csv,.txt" class="visually-hidden">
+        <label class="btn btn-link file-btn" for="expected-file">Upload a CSV</label>
+      </section>
+    </div>
+    <p id="status" class="notice" role="status" hidden></p>
+
+    <section id="results" hidden aria-labelledby="res-h">
+      <h2 id="res-h" class="visually-hidden">Results</h2>
+      <div class="tiles">
+        <div class="tile"><span class="tile-label">Collected</span><span class="tile-value" id="t-collected"></span><span class="tile-sub" id="t-collected-sub"></span></div>
+        <div class="tile"><span class="tile-label">Still owed</span><span class="tile-value" id="t-owed"></span><span class="tile-sub" id="t-owed-sub"></span></div>
+        <div class="tile"><span class="tile-label">Paid in full</span><span class="tile-value" id="t-paid"></span><span class="tile-sub" id="t-paid-sub"></span></div>
+        <div class="tile"><span class="tile-label">Money to sort out</span><span class="tile-value" id="t-unknown"></span><span class="tile-sub" id="t-unknown-sub"></span></div>
+      </div>
+
+      <section class="card" aria-labelledby="people-h">
+        <div class="head-row">
+          <h2 id="people-h">Everyone on the list</h2>
+          <div class="actions">
+            <label class="hint" for="filter">Show <select id="filter"><option value="all">everyone</option><option value="owe">still owes</option><option value="paid">paid in full</option><option value="over">paid more</option><option value="check">matched by name only</option></select></label>
+            <button class="btn" type="button" id="csv">Download CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="people">
+            <thead><tr><th scope="col">Name</th><th scope="col" class="num">Due</th><th scope="col" class="num">Paid</th><th scope="col">Status</th><th scope="col">Matched by</th><th scope="col"><span class="visually-hidden">Reminder</span></th></tr></thead>
+            <tbody id="people"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="pair">
+        <section class="card" aria-labelledby="amb-h">
+          <h2 id="amb-h">Needs a person</h2>
+          <p class="hint">These payments fit more than one person on your list. They are not counted until you decide.</p>
+          <ul class="list" id="ambiguous"></ul>
+        </section>
+        <section class="card" aria-labelledby="un-h">
+          <h2 id="un-h">Not on your list</h2>
+          <p class="hint">Money in from people the list does not know: a new member, a different phone, or someone paying for a friend.</p>
+          <ul class="list" id="unmatched"></ul>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>Reminder message</h2>
+        <div class="field"><label for="tpl">Template for people who still owe</label><textarea id="tpl" rows="3">Hi {first}, a friendly reminder: our records show KES {owed} still to pay. If you already paid, please send the M-Pesa code so we can check. Thank you!</textarea></div>
+        <p class="hint">Use <code>{first}</code>, <code>{name}</code>, <code>{owed}</code>, <code>{paid}</code> and <code>{due}</code>. The WhatsApp button on each row opens a chat with this text when the list has a phone number.</p>
+      </section>
+      <p class="hint" id="skipped"></p>
+    </section>
+  </main>
+  <footer class="wrap foot">
+    <p>Open source: <a href="https://github.com/bytemel/mpesa-match">github.com/bytemel/mpesa-match</a>. Built by <a href="https://timmwangi.com">Timothy Mwangi</a>.</p>
+  </footer>
+</body>
+</html>

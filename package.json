@@ -1,0 +1,10 @@
+{
+  "name": "mpesa-match",
+  "version": "1.0.0",
+  "description": "Match an M-Pesa statement against a list of who should pay: paid, part paid, not paid, and money from people not on the list. Runs in the browser.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Timothy Mwangi",
+  "scripts": { "test": "node --test" },
+  "engines": { "node": ">=20" }
+}
