@@ -1,6 +1,6 @@
 .crumb { margin: -0.6rem 0 0.5rem; font-weight: 600; }
 .crumb a { text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
-.foot a { display: inline-block; padding: 0.6rem 0; }
+.foot a { display: inline-block; padding: 0.7rem 0; min-height: 44px; }
 .field textarea { min-height: 9rem; }
 textarea[wrap="off"] { overflow-x: auto; white-space: pre; }
 .file-btn { justify-self: start; }
